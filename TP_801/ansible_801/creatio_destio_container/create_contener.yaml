@@ -1,0 +1,27 @@
+
+---
+
+- hosts: pass
+  become: yes
+  vars_files:
+   - vars.yaml
+
+  tasks:
+
+  - name: Create a started container
+    lxc_container:
+      name: "{{ item.key }}"
+      container_log: true
+      template: ubuntu
+      state: stopped
+      template_options: --release trusty
+      container_config:
+        - "lxc.net.0.type = veth"
+        - "lxc.net.0.flags = up"
+        - "lxc.net.0.link = br1 "
+        - "lxc.net.0.ipv4.address = {{ item.value.ip }}/24"
+        - "lxc.net.0.veth.pair = {{ item.value.pair }}"
+        - "lxc.net.0.ipv4.gateway = auto"
+    with_dict: "{{ ctn }}"
+  
+  

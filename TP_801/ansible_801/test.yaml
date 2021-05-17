@@ -1,0 +1,43 @@
+
+---
+
+- hosts: pass
+  become: yes
+  vars_files:
+   - vars.yaml
+
+  tasks:
+  - copy:
+      dest: /etc/lxc/default.conf
+      content: |
+        lxc.net.0.type = veth
+        lxc.net.0.link = br1
+        lxc.net.0.flags = up
+        lxc.net.0.hwaddr = 00:16:3e:xx:xx:xx
+
+  - name: containers exist and have local SSH key
+    lxc_container:
+      name: "{{ item.key }}"
+      container_log: true
+      template: ubuntu
+      state: started
+      template_options: --release stretch
+      container_config:
+        - "lxc.net.0.type = veth"
+        - "lxc.net.0.flags = up"
+        - "lxc.net.0.link = br1 "
+        - "lxc.net.0.ipv4.address = {{ item.value.ip }}/24"
+        - "lxc.net.0.veth.pair = {{ item.value.pair }}"
+        - "lxc.net.0.ipv4.gateway = auto"
+    with_dict: "{{ ctn }}"
+
+
+
+
+
+
+
+
+
+
+

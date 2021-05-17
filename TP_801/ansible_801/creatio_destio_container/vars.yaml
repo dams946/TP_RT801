@@ -1,0 +1,7 @@
+---
+
+- interface: br1
+- ctn:
+   C1:
+     ip: 192.168.10.150
+     pair: br-C1

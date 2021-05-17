@@ -1,0 +1,16 @@
+---
+
+
+- hosts: pass
+  gather_facts: false
+  become: true
+  vars_files:
+   - vars.yaml
+
+  tasks:
+
+  - name: Start a container
+    lxc_container:
+     name: "{{ item.key }}"
+     state: started
+    with_dict: "{{ ctn }}"

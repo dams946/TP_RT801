@@ -1,0 +1,12 @@
+
+---
+
+
+- name: add ansible user
+  hosts: ubuntu
+  become: true
+  become_user: root
+  tasks:
+     - name: installation nginx
+       apt: update_cache=yes
+       apt: name=nginx state=present

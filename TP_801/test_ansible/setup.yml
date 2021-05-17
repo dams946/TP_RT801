@@ -1,0 +1,82 @@
+---
+- hosts: localhost
+  connection: local
+  become: true
+  vars:
+  - interface: lxcbr0
+
+  - copy:
+      dest: /etc/default/lxc-net
+      content: |
+        USE_LXC_BRIDGE="true"
+
+  - copy:
+      dest: /etc/lxc/default.conf
+      content: |
+        lxc.net.0.type = veth
+        lxc.net.0.link = {{ interface }}
+        lxc.net.0.flags = up
+        lxc.net.0.hwaddr = 00:16:3e:xx:xx:xx
+
+  - service:
+      name: lxc-net
+      state: started
+
+- hosts: all
+  connection: local
+  become: true
+  vars:
+  - interface: lxcbr0
+  tasks:
+  - name: Load in local SSH key path
+    set_fact:
+      my_ssh_key: "{{ lookup('env','HOME') }}/.ssh/id_rsa.pub"
+
+  - name: interface device exists
+    command: ip addr show {{ interface }}
+    changed_when: false
+    run_once: true
+
+  - name: Local user has an SSH key
+    command: stat {{ my_ssh_key }}
+    changed_when: false
+    run_once: true
+
+  - name: containers exist and have local SSH key
+    delegate_to: localhost
+    lxc_container:
+      name: "{{ inventory_hostname }}"
+      container_log: true
+      template: debian
+      state: started
+      template_options: --release stretch
+      container_config:
+        - "lxc.net.0.type = veth"
+        - "lxc.net.0.flags = up"
+        - "lxc.net.0.link = {{ interface }}"
+        - "lxc.net.0.ipv4.address = {{ ansible_host }}/24"
+        - "lxc.net.0.ipv4.gateway = auto"
+      container_command: |
+        if [ ! -d ~/.ssh ]; then
+          mkdir ~/.ssh
+          echo "{{ lookup('file', my_ssh_key) }}" | tee -a ~/.ssh/authorized_keys
+          sed -i 's/dhcp/manual/' /etc/network/interfaces && systemctl restart network
+        fi
+
+- hosts: localhost
+  connection: local
+  become: false
+  serial: 1
+  tasks:
+  - wait_for: host={{ ansible_host }} port=22
+
+  - name: container key is up-to-date locally
+    shell: ssh-keygen -R {{ ansible_host }}; ssh-keygen -R {{ inventory_hostname }}; (ssh-keyscan {{ ansible_host }} {{ inventory_hostname }} >> ~/.ssh/known_hosts)
+
+- hosts: localhost
+  gather_facts: no
+  vars:
+  - ansible_user: root
+  tasks:
+  - name: install python on target machines
+    raw: which python || (apt-get -y update && apt-get install -y python)

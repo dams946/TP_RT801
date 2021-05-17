@@ -1,0 +1,16 @@
+---
+
+
+- hosts: pass
+  become: true
+  vars_files:
+   - vars.yaml
+
+  
+  tasks:
+
+  - name: delete container
+    lxc_container:
+     name: "{{ item.key }}"
+     state: absent
+    with_dict: "{{ ctn }}"

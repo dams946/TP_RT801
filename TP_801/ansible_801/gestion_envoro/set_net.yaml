@@ -1,0 +1,17 @@
+---
+
+
+- hosts: pass
+  become: yes
+
+  tasks:
+  - name: Enable openvswitch-switch service
+    systemd:
+      name: openvswitch-switch
+      enabled: true
+      state: started
+
+  - name: cree bridge
+    openvswitch_bridge:
+       bridge: br-int
+       state: present

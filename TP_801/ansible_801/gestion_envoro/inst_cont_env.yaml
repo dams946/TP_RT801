@@ -1,0 +1,22 @@
+---
+
+- hosts: pass
+  become: true
+
+  tasks:
+  - name: install lxc-module ansible
+    apt:
+      name: python3-lxc
+  - name : Install env container LXC
+    apt:
+      pkg:
+        - lxc
+        - lxc-utils
+        - lxc-templates
+        - lxctl
+  - name : Install env network
+    apt:
+      pkg:
+      - openvswitch-common
+      - openvswitch-switch
+      - figlet
