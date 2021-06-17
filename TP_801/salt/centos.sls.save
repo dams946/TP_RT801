@@ -1,0 +1,6 @@
+web01:
+  lxc.present:
+    - template: download
+    - options:
+        dist: ubuntu
+        release:        arch: amd64
